@@ -1,0 +1,267 @@
+
+<html>
+<head>
+<title>ee4760 Lab 1</title>
+<style type="text/css">
+<!--
+.red {
+	color: #F00;
+}
+.a1 {
+	color: #F00;
+}
+-->
+</style>
+</head>
+
+<body>
+<h2>
+ECE 4760: Laboratory 1 </h2> 
+<h2> Digital Capacitance Meter.  </h2>
+
+
+
+<b> Introduction. </b>
+<p>
+You will produce a digital capacitance meter (DCM) which displays the capacitance on the graphic LCD. The DCM will 
+measure capacitances from 1 to 100 nF.
+But first you need to set up a board, arrange jumpers, learn how to connect peripheral devices and use the compiler. I strongly suggest that you use some of the time during the first lab exercise to build your own <a href="../../PIC32/target_board.html">PIC32 board</a>, which you can then keep, but if you wish you can borrow one. Once you do that, the <a href="../../PIC32/Microchip_stuff/Microstick_pinput.pdf">MicrostickII</a> will be the programmer for the new board.<b><hr>
+</b>
+<p><b>Hardware </b> </p>
+<p>The <em>Big Board</em> which you will build features a <a href="http://people.ece.cornell.edu/land/courses/ece4760/PIC32/Microchip_stuff/port_expander.pdf">port expander</a>, <a href="http://www.microchip.com/wwwproducts/en/MCP4822">DAC</a>, TFT header-socket, programming header-plug, and power supply. <br>
+See the <a href="../../PIC32/target_board.html">construction/testing page</a> for specific code examples of each device on the big board.
+The connections from the PIC32 to the various peripherials is determined by the construction of the board. The list is repeated here.
+<p><strong>PIC32 i/o pins used on big board, sorted by port number.</strong> Any pin can be<br>
+recovered for general use by unplugging the device that uses the pin. <br>
+SPI chip select ports have jumpers to unplug. <br>
+<span style="font-family: Consolas, 'Andale Mono', 'Lucida Console', 'Lucida Sans Typewriter', Monaco, 'Courier New', monospace">----------------------------<br>
+RA0 on-board LED. Active high.<br>
+RA1 Uart2 RX signal, <em>if serial is turned on in protothreads 1_2_2</em><br>
+RA2 port expander intZ<br>
+RA3 port expander intY <br>
+RA4 
+    PortExpander SPI MISO<br>
+----- <br>
+RB0 TFT D/C <br>
+RB1 TFT-LCD SPI chip select (can be disconnected/changed)<br>
+RB2 TFT reset <br>
+RB4 DAC SPI chip select (can be disconnected/changed)<br>
+RB5 DAC/PortExpander SPI MOSI <br>
+<em>RB6</em> <em>!!! Does not exist on this package!!!</em> (silk screen should read Vbus) <br>
+RB9 Port Expander SPI chip select (can be disconnected/changed)<br>
+RB10 Uart2 TX signal, <em>if serial is turned on in protothreads 1_2_2</em><br>
+RB11 TFT SPI MOSI <br>
+</span><span style="font-family: Consolas, 'Andale Mono', 'Lucida Console', 'Lucida Sans Typewriter', Monaco, 'Courier New', monospace"><em>RB12</em> <em>!!! Does not exist on this package!!!</em> (silk screen should read Vusb3.3) <br>
+RB14 TFT SPI Sclock <br>
+RB15 DAC/PortExpander SPI Sclock<br>
+----------------------------</span>
+<p>But note the few silk-screen errors on the board.
+<p><strong>Big Board silk screen errors</strong>.<br>
+--Edge connector pin marked RB6 -- RB6 Does not exist on this package! Silk screen should read Vbus.<br>
+--Edge connector  pin marked RB12 -- RB12 Does not exist on this package! Silk screen should read Vusb3.3.<br>
+--LED D1 outline -- Silk screen should have flat side should be oriented toward PIC32. 
+<p> <b> Software</b>
+<p> Software you will use is freely downloadable and consists of: 
+<ul>
+  <li> <a href="http://www.microchip.com/pagehandler/en-us/family/mplabx/">MPLABX</a> version 3.05
+   (near bottom of page choose <em>Downloads Archive</em>)
+  <li><a href="http://www.microchip.com/pagehandler/en-us/devtools/mplabxc/home.html">XC32</a> compiler version 1.40 (near bottom of page choose <em>Downloads Archive</em>)
+  <li><a href="http://www.microchip.com/pagehandler/en-us/devtools/mplabxc/home.html">plib</a> (near bottom of page choose <em>Downloads -&gt; scroll to bottom</em>) (<a href="../../PIC32/PLIB_examples/PIC32 Legacy Peripheral Libraries.zip">local copy</a>)
+</ul>
+<p>More information </p>
+<ul>
+  <li><a href="http://ww1.microchip.com/downloads/en/DeviceDoc/61146B.pdf">Getting started with PIC32</a></li>
+  <li><a href="http://ww1.microchip.com/downloads/en/DeviceDoc/50002027C.pdf">MPLABX IDE</a> users guide</li>
+  <li><a href="http://people.ece.cornell.edu/land/courses/ece4760/PIC32/Microchip_stuff/32-bit-Peripheral-Library-Guide.pdf">32_bit peripherials library</a> --<strong> <a href="../../PIC32/PLIB_examples/plib_examples/">PLIB examples</a> (<a href="../../PIC32/PLIB_examples/plib_examples.zip">ZIPPED</a>)</strong> -- (<a href="../../PIC32/PLIB_examples/PIC32 Legacy Peripheral Libraries.zip">full Legacy PLIB</a> 115 MB)</li>
+  <li><a href="http://ww1.microchip.com/downloads/en/DeviceDoc/51685E.pdf">32 bit language tools and libraries</a> including C libraries, DSP, and debugging tools</li>
+  <li><a href="http://people.ece.cornell.edu/land/courses/ece4760/PIC32/Microchip_stuff/mplab-xc32-users-guide.pdf">XC32 Compiler Users Guide</a></li>
+  <li><a href="../../PIC32/Microchip_stuff/2xx_datasheet.pdf">PIC32MX2xx datasheet</a> -- <a href="../../PIC32/Microchip_stuff/Erata_PIC32MX.pdf">Errata</a></li>
+  <li><a href="http://people.ece.cornell.edu/land/courses/ece4760/PIC32/Microchip_stuff/Microstick_pinput.pdf"><strong>MicrostickII pinout</strong></a></li>
+  <li><a href="../../PIC32/Microchip_stuff/32mx250f128b.html">PIC32MX250 <strong>configuration</strong> <strong>options</strong></a>
+    <ul>
+      <li>JTAG enable overrides pins 13, 14, and 15</li>
+      <li>Primary oscillator enable overrides pins 9 and 10</li>
+      <li>Secondary oscillator enalbe overrudes pins 11 and 12</li>
+    </ul>
+  </li>
+  <li><a href="http://hades.mech.northwestern.edu/images/2/21/61132B_PIC32ReferenceManual.pdf">PIC32 reference manual</a> (<a href="../../PIC32/Microchip_stuff/PIC32ReferenceManual.pdf">local copy</a>)<br>
+  (this is HUGE -- better to go to <a href="http://www.microchip.com/pagehandler/en-us/family/32bit/">PIC32 page</a>, then Documentation&gt;Reference Manual and choose the section)</li>
+  <li><strong>Specific pages from the PIC32 datasheet</strong>
+  <ol>
+    <li>PIC32MX250F128B <a href="../../PIC32/Microchip_stuff/PIC32MX250F128B_pinput.PNG"><strong>PDIP</strong> <strong>pinout </strong></a>by pin</li>
+    <li>PIC32MX250F128B  ::: <strong>Signal Names</strong>=&gt;<strong>Pins </strong>::: <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_1.PNG"><strong>1</strong></a><strong>, <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_2.PNG">2</a>, <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_3.PNG">3</a>, <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_4.PNG">4</a>, <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_5.PNG">5</a>, <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_6.PNG">6</a>, <a href="../../PIC32/Microchip_stuff/Pinput_name_table_1_1_7.PNG">7</a></strong> PDIP highlighted in green (for <strong>PPS</strong> see next tables)</li>
+    <li>PIC32MX250F128B <a href="../../PIC32/Microchip_stuff/PPS_inputs_table_11_1.PNG"><strong>Peripheral Pin Select (PPS) input table</strong></a><strong></strong><br>
+      example:  UART receive pin ::: specify PPS group, signal, logical pin name<br>
+      <code>PPSInput(2, U2RX, RPB11);</code> //Assign U2RX to pin RPB11 -- Physical pin 22 on 28 PDIP </li>
+    <li>PIC32MX250F128B <strong><a href="../../PIC32/Microchip_stuff/PPS_outputs_table11_2.PNG">Peripheral Pin Select (PPS) output table</a></strong><br>
+      example: UART transmit pin ::: specify PPS group,  logical pin name, signal<br>
+      <code>PPSOutput(4, RPB10, U2TX);</code> //Assign U2TX to pin RPB10 -- Physical pin 21 on 28 PDIP </li>
+    </ol>
+  </li>
+</ul>
+<p><strong>Microstick2 as a programmer</strong></p>
+<p>The connections to the microcontroller socket on the Microstick2 act like the <a href="../../PIC32/Microchip_stuff/pickit3_connections.PNG">standard programming signals</a> from the <a href="../../PIC32/Microchip_stuff/pickit3_users_guide.pdf">PICKIT3</a>, the programmer which was used to develop the boards you will build. On both the big and small board,  J1 marks pin1 of the 6-pin ICSP header.</p>
+<table width="572" border="1">
+  <tbody>
+    <tr>
+      <th width="175" scope="col">Signal</th>
+      <th width="201" scope="col">PICkit3 (ICSP) <br>
+      connector on board</th>
+      <th width="174" scope="col">Microstick2 <br>
+      DIP Pins</th>
+    </tr>
+    <tr>
+      <td>MCLR</td>
+      <td align="center">1</td>
+      <td align="center">1</td>
+    </tr>
+    <tr>
+      <td>ground</td>
+      <td align="center">3</td>
+      <td align="center">27</td>
+    </tr>
+    <tr>
+      <td>prog data (PGD)</td>
+      <td align="center">4</td>
+      <td align="center">4</td>
+    </tr>
+    <tr>
+      <td>prog clock (PGC)</td>
+      <td align="center">5</td>
+      <td align="center">5</td>
+    </tr>
+  </tbody>
+</table>
+<p>A wiring example is shown below. Note that pin 1, MCLR, is only available on the Microstick2 DIP socket as shown.<br>
+  When you click on the  images below, you  will get enlargments with the pin numbers indicated.  <br>
+<a href="../../PIC32/Target_board/microstick_pgmer_1.jpg"><img src="../../PIC32/Target_board/microstick_pgmer_1_small.jpg" width="400" height="318" alt=""/></a><a href="../../PIC32/Target_board/microstick_pgmer_2.jpg"><img src="../../PIC32/Target_board/microstick_pgmer_2_small.jpg" width="406" height="318" alt=""/></a></p>
+<p>&nbsp;</p>
+<p><strong>Testing the board after you build it.</strong></p>
+<p>Using the programmer you just connected, compile, load and run the <strong>Board test example</strong> on the <a href="../../PIC32/target_board.html">board construction</a> page. <br>
+Make sure that the TFT, the DAC, and LED work. As described on the page. <em><br>
+Be sure to attach the chip-select jumpers for the TFT and DAC</em>! </p>
+<hr>
+<p><strong>Procedure</strong></p>
+<ol>
+  <li>For most of the semester  you will be useing the TFT LCD for output and debugging. <br>
+    The test code above should display a simple test sequence,   <em> if you mount the TFT_CS jumper</em> on the big board.<br>
+    You should also mount the 
+    DAC_CS jumper.<br>
+    You will need to use some of the graphics library calls described in the test code in this lab.
+    <br>
+Test code: <a href="../../PIC32/Target_board/TFT_test_BRL4.c">TFT_test_BRL4.c</a> -- displays color patches, system time,  moves a ball, generates a slow ramp on the DAC, and blinks the LED.
+  <li>You may want to refer the the <a href="../../PIC32/index_Protothreads.html"><strong>ProtoThreads page</strong></a> for the general threading setup. <br>
+    But note that the UART functions mentioned on that page were disabled for this lab.
+      <br>
+    The following test code shows how to set up a <strong>timer input event capture</strong>, which you will need to do for this lab.
+    <br>
+  Test code: <a href="../../PIC32/Out_compare_input_capture/Timer_catpure_signal_gen_1_2.c">Timer_catpure_signal_gen_1_2.c</a>. (<a href="../../PIC32/Out_compare_input_capture/Big_board_capture_1_2.zip">project ZIP</a>)
+  (<a href="lab1_capture_project_files.PNG">image of project panel</a>)
+  <li>Timing of all functions in this lab, <strong><em>and every exercise in this course</em></strong> will be handled by interrupt-driven counters, (including the builtin functions in ProtoThreads) and not by software wait-loops. This will be enforced because wait-loops are hard to debug and tend to limit multitasking. You may not use any form of a delay(mSec) function.
+  <li>The oscilloscope is essential for debugging this lab (and every lab). I suggest that as soon as the circuit is built that you connect the scope to the node where the capacitor-under-test connects to the 100 ohm resistor. The waveform will help you figure out what the softwrare is doing (or not doing) and is required for the lab writeup.
+  <li>You can connect the <strong>oscilloscope to the computer</strong> with a USB cable (type-B connector) attached to the <em>back</em> of the oscilloscope (<em>not</em> the type-A connector on the front). <br>
+    To use the Tektronix software on the PC:
+  <ol>
+    <li>Search for <code>OpenChoice Desktop</code> in the start menu, and start the program. </li>
+    <li>When the main panel appears, choose <code>Select Instrument</code>.</li>
+    <li>In the select dialog box, choose the <code>USB</code> device, and click <code>OK</code>.</li>
+    <li>Back in the main panel, click <code>Get Screen</code>.</li>
+    <li>Copy or save the image or data to your lab report.</li>
+</ol>
+</ol>
+<p>
+  <strong>Capacitance measurement</strong>
+<p>
+  The approach we will use is to measure the time it takes for a RC circuit to
+  charge a capacitor to a given level. Using the IVref internal voltage reference, then the level will be <code>v(t<sub>1.2</sub>)=1.2&plusmn;0.06 </code>.  Since the internal reference has 5% possible error, you will need to calibrate for the voltage for your chip. One way to do this is to perform a linear regression of capacitance and rise time. Specifically,
+  we will use the internal analog comparator as shown in the following 
+  diagram to trigger a timer capture event. The <code>C1OUT</code> pin needs to be connected to one of the event capture channels, with <code>IC1</code> shown. Since R will be known, we can get C because the voltage on the capacitor <code>v(t)=Vdd(1-exp(-t/&tau;))</code> with <code>&tau;=R*C</code>.
+  The capacitor shown is the device you are trying to measure.You must choose one value of R
+so that the capacitor charging time is not too short or too long over the whole range of C. If it is too short (say, less than 100 counts) you will lose measurement accuracy. If it is too long, the timer will overflow (16-bits). The value of R you choose will be partly constrained by the timer prescalar, but should not be bigger than 1Megohm, or smaller than about 10K, as explained below.
+<p>The 100 ohm resistor limits discharging current when using pin 7 (B3) as an output.
+  The following code snippet is sufficient to set up internal compare1 and read <code>C1OUT</code> with the oscilloscope. Note that C1INA is fixed to RB3, but that C1OUT is on <a href="../../PIC32/Microchip_stuff/PPS_outputs_table11_2.PNG">PPS output (group 4)</a>.<br>
+  <code>//set up compare 1<br>
+  CMP1Open(CMP_ENABLE | CMP_OUTPUT_ENABLE | CMP1_NEG_INPUT_IVREF);<br>
+  PPSOutput(4, RPB9, C1OUT); //pin18<br>
+  mPORTBSetPinsDigitalIn(BIT_3); //Set port as input (pin 7 is RB3</code>)
+<p><code>  </code>
+<p>
+<img src="lab1_schematic.PNG">
+<p>
+
+One thread of your program will have to (in time order):
+<ol>
+<li> Drive C1INA (PortB3) to zero by making it an output and clearing the bit, then wait long enough
+	to discharge the capacitor through 100 ohms. Since R and the 100 ohm resistor form a voltage divider, to dischage to zero volts with  1% accuracy, <code>R&gt;100*(100ohms). </code>
+<li> Convert C1INA (PortB3) to an input and start a timer connected to the chosen capture unit.. The capacitor will start
+	to charge toward Vcc. 
+<li> Detect when the voltage at C1INA (PortB3) is greater than than the IVref. That is, you will have to record when the comparator
+changes state. Do this by connecting the comapator output to the input capture IC1. Using input capture gives better timing accuracy and more dynamic range than polling or an interrupt.
+<li>Print capicitance to the TFT.
+<li> Repeat 
+</ol>
+
+<p>I suggest that you organize the program as follows:</p>
+<ul>
+  <li><strong>Protothreads</strong> maintains the ISR-driven, millisceond-scale timing.</li>
+  <li><strong>Capture ISR</strong> copies IC1 into a variable. <code>capture1 = mIC1ReadCapture();</code> The actual IC1 capture is done in hardware.</li>
+  <li><strong>Main</strong> sets up peripherials and protothreads then just schedules tasks, round-robin.</li>
+  <li><strong>Measure Thread
+    </strong>
+    <ul>
+      <li> Does step 1 above</li>
+      <li>Waits for the discharge using <code>PT_YIELD_TIME_msec(wait_time)</code></li>
+      <li>Does step 2 above</li>
+      <li>Waits for capture event (step 3)</li>
+      <li>Computes the capacitance and updates the LCD. </li>
+      <li>waits for 200 mSec using<code> PT_YIELD_TIME_msec(200)</code></li>
+    </ul>
+  </li>
+  <li><strong>Blink Thread</strong> Blinks a circle on the LCD as a hearbeat, at 1/second.</li>
+</ul>
+<p>&nbsp;</p>
+<hr>
+<b> Assignment</b>
+<p>Timing of all functions in this lab, <strong><em>and every exercise in this course</em></strong> will be handled by interrupt-driven counters, not by software wait-loops. <br>
+  ProtoThreads maintains a ISR driven timer for you! This will be enforced because wait-loops are hard to debug and tend to limit multitasking.<br>
+  <br>
+Write a Protohreads C program which will:</p>
+<ul>
+  <li> The LCD should be updated every 200 mSec or so. 
+<li>An circle/disc on the LCD should blink about 1/second. 
+<li>The capacitance should be measured as quickly as possible as described above.
+<li>The range of capacitances to be measured is 1 nf to 100 nf.
+<li>The program should detect whether a capacitance is present or not, <br>
+  and display an appropriate message if no capacitor is present. 
+<li> If present, format the  capacitance as an ASCII number
+ and prints the message <code>C = xx.x nf </code>to the LCD. <br>
+ There should be <em>exactly one</em> digit shown after the decimal point.
+<li>Part of  validating the circuit will be to plot capacitance versus time. <br>
+  Doing this will enable you to compensate for offset and gain of your circuit.
+</ul>
+<p>
+
+When you demonstrate the program to 
+a staff member, you should demonstrate that the capacitance is correct within
+  the tolerance of the resistors you use. Your program should not need to be
+  reset during the demo.
+<p>
+
+Your written lab report should include the sections mentioned in the <a href="../../ee476.policy.html">policy page</a>, and : 
+<ul>
+<li> How you converted time to capacitance.
+<li>A plot of the regression analysis you did to determine the time-offset and the slope of capacitance/time measured.
+<li> A heavily commented listing of your code.
+<li>A screen capture of the oscilloscope showing the charge/discharge waveform.
+<li>Explain how you could make the meter autoranging.
+</ul>
+
+
+
+<hr>
+<small>
+Copyright Cornell University  
+<!-- #BeginDate format:Am1 -->August 27, 2018<!-- #EndDate -->
+</small>
+</body> </html>
+
